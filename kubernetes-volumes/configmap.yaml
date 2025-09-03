@@ -17,3 +17,5 @@ data:
           root   /usr/share/nginx/html;
       }
     }
+  key: value
+  someKey: someValue
