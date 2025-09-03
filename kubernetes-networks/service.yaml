@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  namespace: homework
+spec:
+  type: ClusterIP
+  selector:
+    app: server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
