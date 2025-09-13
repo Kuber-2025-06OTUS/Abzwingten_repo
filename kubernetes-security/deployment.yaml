@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: homework
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      serviceAccountName: monitoring
+      nodeSelector:
+        homework: true
+      initContainers:
+      - name: init-page
+        image: busybox:1.36.1
+        command: ['sh', '-c', 'wget https://www.pikabu.ru/ -O /init/index.html']
+        volumeMounts:
+        - name: homework-volume
+          mountPath: /init
+      containers:
+      - name: nginx-container
+        image: nginx:1.29
+        ports:
+        - containerPort: 8000
+          name: http
+        lifecycle:
+          preStop:
+            exec:
+              command: ['sh', '-c', 'rm', '/homework/index.html']
+        volumeMounts:
+        - name: homework-volume
+          mountPath: /homework
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        - name: config-pairs
+          mountPath: /homework/conf
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 8000
+          initialDelaySeconds: 1
+          periodSeconds: 5
+      volumes:
+      - name: homework-volume
+        persistenVolumeClaim:
+          claimName: server
+      - name: config
+        configMap:
+          name: nginx-config
+          items:
+          - key: default.conf
+            path: default.conf
+      - name: config-pairs
+        configMap:
+          name: nginx-config
+          items:
+          - key: key
+            path: key
+          - key: someKey
+            path: someKey
