@@ -1,0 +1,16 @@
+datasources: 
+ datasources.yaml:
+   apiVersion: 1
+   datasources:
+   - name: loki
+     type: loki
+     url: http://loki-gateway.logging.svc.cluster.local/
+persistence:
+  enabled: true
+nodeSelector:
+  node-role: "infra"
+tolerations:
+- key: "node-role"
+  operator: "Equal"
+  value: "infra"
+  effect: "NoSchedule"
