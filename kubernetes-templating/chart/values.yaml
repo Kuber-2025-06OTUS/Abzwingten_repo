@@ -1,0 +1,76 @@
+replicaCount: 3
+
+image:
+  repository: nginx
+  tag: "1.29.0-alpine"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  name: monitoring
+  create: true
+  createTokenSecret: false
+
+role:
+  name: cd-admin
+
+nodeSelector:
+  homework: "true"
+
+nginx:
+  listenPort: 8000
+  rootPath: /homework
+  configName: nginx-config
+
+  readiness:
+    enabled: true
+    path: /metrics.html
+    initialDelaySeconds: 10
+    periodSeconds: 2
+
+  liveness:
+    enabled: false
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+service:
+  port: 80
+
+selector:
+  otus: homework
+
+ingress:
+  enabled: true
+  name: nginx-ingress
+  className: nginx
+  host: homework.otus
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  paths:
+    - path: /homepage$
+      pathType: ImplementationSpecific
+      service:
+        name: nginx-service
+        port: 80
+    - path: /
+      pathType: Prefix
+      service:
+        name: nginx-service
+        port: 80
+
+volumes:
+  homeworkVolumeSize: 500Mi
+
+cluster:
+  server: https://10.0.0.10:8443
+  name: minikube
+
+monitoring:
+  serviceAccountName: monitoring
+  clusterRoleName: cl-mon-role
+  clusterRoleBindingName: cl-mon-bind
+
+initContainer:
+  image: alpine/curl:8.14.1
+

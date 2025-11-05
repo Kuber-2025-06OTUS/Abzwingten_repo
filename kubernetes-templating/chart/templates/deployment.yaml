@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    otus: homework
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      otus: homework
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        otus: homework
+    spec:
+{{ toYaml .Values.nodeSelector | indent 6 }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      initContainers:
+        - name: init
+          image: {{ .Values.initContainer.image | quote }}
+          command:
+            - 'sh'
+            - '-c'
+            - 'curl --cacert ${SERVICEACCOUNT}/ca.crt --header "Authorization: Bearer $(cat ${SERVICEACCOUNT}/token)" -X GET ${APISERVER}/metrics -o /init/metrics.html'
+          env:
+            - name: APISERVER
+              value: {{ .Values.cluster.server | quote }}
+            - name: SERVICEACCOUNT
+              value: /var/run/secrets/kubernetes.io/serviceaccount
+          volumeMounts:
+            - name: homework-vol
+              mountPath: "/init"
+      containers:
+        - name: nginx
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+{{- if .Values.nginx.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.nginx.readiness.path | quote }}
+              port: {{ .Values.nginx.listenPort }}
+            initialDelaySeconds: {{ .Values.nginx.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.nginx.readiness.periodSeconds }}
+{{- end }}
+{{- if .Values.nginx.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.nginx.liveness.path | quote }}
+              port: {{ .Values.nginx.listenPort }}
+            initialDelaySeconds: {{ .Values.nginx.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.nginx.liveness.periodSeconds }}
+{{- end }}
+          ports:
+            - containerPort: {{ .Values.nginx.listenPort }}
+          lifecycle:
+            preStop:
+              exec:
+                # удалить содержимое директории перед остановкой контейнера
+                command: ["sh", "-c", "rm -rf {{ .Values.nginx.rootPath }}/*"]
+          volumeMounts:
+            - name: homework-vol
+              mountPath: {{ .Values.nginx.rootPath }}
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+      volumes:
+        - name: homework-vol
+          emptyDir:
+            sizeLimit: {{ .Values.volumes.homeworkVolumeSize }}
+        - name: nginx-config
+          configMap:
+            name: {{ .Values.nginx.configName }}
+            items:
+              - key: default.conf
+                path: default.conf
+

@@ -1,0 +1,25 @@
+releases:
+- name: kafka
+  namespace: prod
+  chart: oci://registry-1.docker.io/bitnamicharts/kafka
+  version: 25.3.5
+  set:
+  - name: broker.replicaCount
+    value: 5
+  - name: listeners.client.protocol 
+    value: SASL_PLAINTEXT
+  - name: listeners.interbroker.protocol 
+    value: SASL_PLAINTEXT
+- name: kafka
+  namespace: dev
+  chart: oci://registry-1.docker.io/bitnamicharts/kafka
+  version: "*"
+  set:
+  - name: broker.replicaCount
+    value: 1
+  - name: controller.replicaCoun
+    value: 1
+  - name: listeners.client.protocol 
+    value: PLAINTEXT
+  - name: listeners.interbroker.protocol 
+    value: PLAINTEXT
