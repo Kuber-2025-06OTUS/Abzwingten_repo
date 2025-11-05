@@ -1,0 +1,19 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otus-argocd-1
+  namespace: argocd
+spec:
+  destination:
+    namespace: otus-argocd-1
+    server: https://kubernetes.default.svc
+  project: otus
+  source:
+    path: kubernetes-gitops/nginx-deployment
+    repoURL: git@github.com:Kuber-2025-06OTUS/Abzwingten_repo.git
+    targetRevision: kubernetes-gitops
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Replace=true

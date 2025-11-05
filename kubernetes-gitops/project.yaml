@@ -1,0 +1,14 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: otus
+  namespace: argocd
+spec:
+  description: Project to make Dz exersises
+  destinations:
+    - name: in-cluster
+      namespace: otus*
+      server: https://kubernetes.default.svc
+  orphanedResources:
+    warn: true
