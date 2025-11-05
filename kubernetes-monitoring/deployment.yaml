@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homework-8
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: homework-8
+    spec:
+      containers:
+      - name: metrics-exporter
+        image: nginx/nginx-prometheus-exporter:1.4
+        ports:
+          - containerPort: 9113
+            name: metric
+        command: ['nginx-prometheus-exporter', '--nginx.scrape-uri', 'http://127.0.0.1/stub_status']
+      - name: nginx-container
+        image: nginx:1.29
+        ports:
+        - containerPort: 80
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /stub_status
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 2
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-config
+          items:
+          - key: default.conf
+            path: default.conf
+
