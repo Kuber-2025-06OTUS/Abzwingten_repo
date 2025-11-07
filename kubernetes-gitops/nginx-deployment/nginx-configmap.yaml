@@ -1,0 +1,36 @@
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-configmap
+  namespace: otus-argocd-1
+data:
+  nginx.conf: |
+    # nginx.conf
+    worker_processes 1;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+
+        sendfile        on;
+        keepalive_timeout  65;
+
+        server {
+            listen 8000 default_server;
+            server_name _;
+
+            root /homework/;
+
+            index index.html index.htm;
+
+            location / {
+                try_files $uri $uri/ =404;
+            }
+        }
+    }

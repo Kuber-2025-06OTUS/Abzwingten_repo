@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otus-argocd-2
+  namespace: argocd
+spec:
+  destination:
+    namespace: otus-argocd-2
+    server: https://kubernetes.default.svc
+  project: otus
+  source:
+    helm:
+      parameters:
+        - name: replicaCount
+          value: "3"
+    path: kubernetes-templating/my-mega-app/my-mega-app-chart
+    repoURL: git@github.com:Kuber-2025-06OTUS/Abzwingten_repo.git
+    targetRevision: kubernetes-gitops
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true

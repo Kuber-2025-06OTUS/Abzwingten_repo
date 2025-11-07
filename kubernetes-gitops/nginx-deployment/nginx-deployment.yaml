@@ -1,0 +1,69 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: otus-argocd-1
+  labels:
+    app: homework-3
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: homework-3
+  template:
+    metadata:
+      labels:
+        app: "homework-3"
+    spec:
+      containers:
+        - name: myservice
+          image: nginx:1.28.0-alpine
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: web
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          ports:
+            - containerPort: 8000
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 500Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - mountPath: /homework
+              name: index-dir
+            - mountPath: "/etc/nginx/nginx.conf"
+              name: nginx-config
+              subPath: nginx.conf
+              readOnly: true
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /homework"]
+      initContainers:
+        - name: init-myservice
+          image: busybox:1.37.0-glibc
+          command: ['sh', '-c', "wget https://google.com -O /init/index.html"]
+          volumeMounts:
+            - mountPath: /init
+              name: index-dir
+      volumes:
+        - name: index-dir
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: nginx-config
+          configMap:
+            name: nginx-configmap
+      restartPolicy: Always
