@@ -19,7 +19,7 @@ loki:
   auth_enabled: false
   schemaConfig:
     configs:
-      - from: "2025-11-5"
+      - from: "2025-11-3"
         store: tsdb
         object_store: s3
         schema: v13
