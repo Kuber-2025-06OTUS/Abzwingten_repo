@@ -1,0 +1,46 @@
+{{- /*
+Ingress template: templates/ingress-nginx.yaml
+*/ -}}
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name | default "nginx-ingress" }}
+  namespace: {{ .Release.Namespace }}
+{{- with .Values.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | default "nginx" }}
+  rules:
+  - host: {{ .Values.ingress.host | default "homework.otus" }}
+    http:
+      paths:
+{{- if .Values.ingress.paths }}
+{{- range .Values.ingress.paths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType | default "Prefix" }}
+        backend:
+          service:
+            name: {{ .service.name | default $.Values.service.name | default "nginx-service" }}
+            port:
+              number: {{ .service.port | default $.Values.service.port | default 80 }}
+{{- end }}
+{{- else }}
+      - path: /homepage$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .Values.service.name | default "nginx-service" }}
+            port:
+              number: {{ .Values.service.port | default 80 }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.service.name | default "nginx-service" }}
+            port:
+              number: {{ .Values.service.port | default 80 }}
+{{- end }}
+{{- end }}
