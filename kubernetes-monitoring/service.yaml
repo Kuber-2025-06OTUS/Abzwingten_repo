@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: homework-8
+spec:
+  type: ClusterIP
+  selector:
+    app: homework-8
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+    - name: metric
+      protocol: TCP
+      port: 9113
+      targetPort: metric
+
